@@ -1,3 +1,4 @@
+  <object data="assets/icons.svg" type="image/svg+xml" hidden></object>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,36 +6,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="UXOrbit - Multi-Agent UX Testing Dashboard">
   <title>UXOrbit - Multi-Agent UX Testing Dashboard</title>
-  <link rel="stylesheet" href="../style.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="components.css">
+  <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="favicon.ico">
 </head>
 <body>
   <div class="container">
-    <header>
-      <h1>Multi-Agent UX Testing Dashboard</h1>
+    <header class="uxorbit-header" aria-label="UXOrbit Branding">
+      <div class="brand-title">UXOrbit</div>
+      <div class="brand-subtitle">Multi-Agent UX Testing Dashboard</div>
     </header>
     <main>
       <section class="dashboard">
-        <form id="test-form">
-          <div class="input-section">
-            <label for="website-url">Website URL</label>
-            <input type="url" id="website-url" placeholder="https://example.com" required>
-          </div>
-          <div class="tasks-section">
-            <h3>Select Testing Agents</h3>
-            <div class="checkbox-group">
-              <label><input type="checkbox" value="form" id="agent-form"> Form Filling</label>
-              <label><input type="checkbox" value="navigation" id="agent-navigation"> Navigation Testing</label>
-              <label><input type="checkbox" value="feedback" id="agent-feedback"> Feedback Analysis</label>
+        <form id="test-form" aria-label="UX Testing Form">
+          <fieldset class="input-section">
+            <legend>Website URL</legend>
+            <label for="website-url">Enter the website to test:</label>
+            <input type="url" id="website-url" name="website-url" placeholder="https://example.com" required aria-required="true" autocomplete="url">
+          </fieldset>
+          <fieldset class="tasks-section">
+            <legend>Select Testing Agents</legend>
+            <div class="checkbox-group" role="group" aria-label="Agent Selection">
+              <label><input type="checkbox" value="form" id="agent-form" name="agents"> Form Filling</label>
+              <label><input type="checkbox" value="navigation" id="agent-navigation" name="agents"> Navigation Testing</label>
+              <label><input type="checkbox" value="feedback" id="agent-feedback" name="agents"> Feedback Analysis</label>
             </div>
-          </div>
+          </fieldset>
           <div class="action-section">
-            <button id="start-agents" type="submit">Start Testing</button>
-            <div id="status"></div>
+            <button id="start-agents" type="submit" aria-label="Start Testing">Start Testing</button>
+            <div id="status" aria-live="polite"></div>
+            <div class="spinner" aria-hidden="true" style="display:none;"></div>
           </div>
         </form>
-        <section class="results-section">
+        <section class="results-section" aria-label="Test Results">
           <h3>Test Results</h3>
-          <div id="results"></div>
+          <div id="results" class="results-grid"></div>
         </section>
       </section>
     </main>

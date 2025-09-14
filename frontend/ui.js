@@ -4,11 +4,51 @@ function $(selector) {
   return el;
 }
 
+function createAgentIcon(agentType) {
+  const icon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  icon.setAttribute('width', '32');
+  icon.setAttribute('height', '32');
+  icon.setAttribute('aria-hidden', 'true');
+  icon.classList.add('agent-icon');
+  // Use inline SVG for demo; replace with sprite reference for production
+  if (agentType === 'form') {
+    icon.innerHTML = '<rect x="8" y="8" width="16" height="16" rx="3" fill="#2ec4b6"/><text x="16" y="22" text-anchor="middle" font-size="12" fill="#fff">F</text>';
+  } else if (agentType === 'navigation') {
+    icon.innerHTML = '<circle cx="16" cy="16" r="14" fill="#3a86ff"/><text x="16" y="22" text-anchor="middle" font-size="12" fill="#fff">N</text>';
+  } else if (agentType === 'feedback') {
+    icon.innerHTML = '<rect x="4" y="10" width="24" height="12" rx="6" fill="#ffbe0b"/><text x="16" y="20" text-anchor="middle" font-size="12" fill="#fff">A</text>';
+  } else {
+    icon.innerHTML = '<circle cx="16" cy="16" r="14" fill="#adb5bd"/>';
+  }
+  return icon;
+}
+
+function animateCardEntry(card) {
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(20px)';
+  setTimeout(() => {
+    card.style.transition = 'opacity 0.5s, transform 0.5s';
+    card.style.opacity = '1';
+    card.style.transform = 'translateY(0)';
+  }, 50);
+}
+
+function formatResultData(data) {
+  if (!data) return '';
+  if (typeof data === 'string') return data;
+  if (Array.isArray(data)) return data.map(formatResultData).join(', ');
+  if (typeof data === 'object') return JSON.stringify(data, null, 2);
+  return String(data);
+}
+
 function createResultCard(agentResult) {
   const card = document.createElement('div');
   card.className = 'result-card';
+  card.setAttribute('tabindex', '0');
+  card.setAttribute('aria-label', `${agentResult.agentType || 'Agent'} result`);
+  card.appendChild(createAgentIcon(agentResult.agentType));
   const title = document.createElement('h4');
-  title.textContent = `${agentResult.agentType.charAt(0).toUpperCase() + agentResult.agentType.slice(1)} Agent`;
+  title.textContent = `${agentResult.agentType ? agentResult.agentType.charAt(0).toUpperCase() + agentResult.agentType.slice(1) : 'Agent'} Agent`;
   card.appendChild(title);
   if (agentResult.error) {
     const errorMsg = document.createElement('div');
@@ -41,13 +81,14 @@ function createResultCard(agentResult) {
     }
   } else {
     const details = document.createElement('pre');
-    details.textContent = JSON.stringify(agentResult, null, 2);
+    details.textContent = formatResultData(agentResult);
     card.appendChild(details);
   }
+  animateCardEntry(card);
   return card;
 }
 
-function updateStatus(status) {
+function createProgressIndicator(status) {
   const statusMap = {
     started: 'Pending',
     running: 'Running',
@@ -59,6 +100,11 @@ function updateStatus(status) {
   const statusEl = document.querySelector('#status');
   if (!statusEl || !status) return;
   statusEl.innerHTML = `<span class="status-badge ${mapStatusToClass(status)}">${statusMap[status] || status}</span>`;
+  if (status === 'running' || status === 'started' || status === 'pending') {
+    document.getElementById('loading-spinner').style.display = 'inline-block';
+  } else {
+    document.getElementById('loading-spinner').style.display = 'none';
+  }
 }
 
 function mapStatusToClass(status) {
@@ -70,22 +116,24 @@ function mapStatusToClass(status) {
 
 function displayError(msg) {
   const resultsDiv = $("#results");
-  resultsDiv.innerHTML = `<div class="error-message">${msg}</div>`;
+  resultsDiv.innerHTML = `<div class="error-message" role="alert">${msg}</div>`;
+  setTimeout(() => {
+    const errEl = document.querySelector('.error-message');
+    if (errEl) errEl.style.opacity = '0';
+  }, 4000);
 }
 
 function clearResults() {
   $("#results").innerHTML = '';
-  updateStatus('pending');
+  createProgressIndicator('pending');
 }
 
 function showLoading() {
-  const resultsDiv = $("#results");
-  resultsDiv.innerHTML = '<div class="loading-spinner"></div>';
+  document.getElementById('loading-spinner').style.display = 'inline-block';
 }
 
 function hideLoading() {
-  const spinner = document.querySelector('.loading-spinner');
-  if (spinner) spinner.remove();
+  document.getElementById('loading-spinner').style.display = 'none';
 }
 
-export { createResultCard, updateStatus, displayError, clearResults, showLoading, hideLoading };
+export { createResultCard, createProgressIndicator as updateStatus, displayError, clearResults, showLoading, hideLoading };
