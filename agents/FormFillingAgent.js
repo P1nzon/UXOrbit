@@ -128,7 +128,11 @@ class FormFillingAgent {
         } finally {
             if (this.browser) await this.browser.close();
         }
-        return results;
+        return {
+            runId: this.runId,
+            results,
+            screenshots: await screenshotCapture.list(this.screenshotDir)
+        };
     }
 }
 
