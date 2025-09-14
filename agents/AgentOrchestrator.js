@@ -19,7 +19,9 @@ class AgentOrchestrator {
         }
         this.sessions.updateStatus(sessionId, 'running');
         logger.info(`Session ${sessionId} started for agents: ${agentTypes.join(', ')}`);
-        let aggregated = null;
+    let aggregated = null;
+    const ResultPersistence = require('../backend/utils/resultPersistence');
+    const persistence = new ResultPersistence();
         try {
             const agentMap = {
                 form: FormFillingAgent,
@@ -35,7 +37,20 @@ class AgentOrchestrator {
                     .catch(err => ({ error: err.message, agentType: type }));
             });
             const agentResults = await Promise.all(promises);
+            const startTimestamp = this.sessions.getSession(sessionId)?.created || Date.now();
+            const endTimestamp = Date.now();
+            const duration = endTimestamp - startTimestamp;
+            const urlMeta = url;
+            const agentTypesMeta = agentTypes;
             aggregated = resultAggregator.aggregate(agentResults);
+            aggregated.metadata = {
+                url: urlMeta,
+                agentTypes: agentTypesMeta,
+                startTimestamp,
+                endTimestamp,
+                duration
+            };
+            await persistence.saveResults(sessionId, aggregated);
             const hasErrors = agentResults.some(r => r.error);
             this.sessions.storeResults(sessionId, aggregated);
             this.sessions.updateStatus(sessionId, hasErrors ? 'completed_with_errors' : 'completed');

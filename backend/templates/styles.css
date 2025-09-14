@@ -1,0 +1,68 @@
+body {
+  font-family: 'Inter', Arial, sans-serif;
+  background: #f8f9fa;
+  color: #222;
+  margin: 0;
+  padding: 0;
+}
+.report-header {
+  background: linear-gradient(90deg, #3a86ff 0%, #2ec4b6 100%);
+  color: #fff;
+  padding: 2rem;
+  border-radius: 12px 12px 0 0;
+  margin-bottom: 2rem;
+}
+.report-meta {
+  font-size: 1rem;
+  margin-top: 1rem;
+  display: flex;
+  gap: 2rem;
+}
+.summary-section {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+.score {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #3a86ff;
+}
+.critical-issues, .recommendations {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+.agent-section {
+  background: #f1f3f6;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+.agent-summary {
+  font-size: 1.1rem;
+  font-weight: 500;
+  margin-bottom: 1rem;
+}
+.screenshots img {
+  max-width: 300px;
+  border-radius: 8px;
+  margin: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+@media print {
+  body {
+    background: #fff;
+    color: #222;
+  }
+  .report-header {
+    color: #222;
+    background: #fff;
+    border-bottom: 2px solid #3a86ff;
+  }
+}

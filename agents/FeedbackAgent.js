@@ -20,6 +20,7 @@ class FeedbackAgent {
         this.logger = logger;
         this.runId = uuidv4();
         this.screenshotDir = options.screenshotDir || path.resolve('screenshots', this.runId);
+        this.screenshotBaseUrl = options.screenshotBaseUrl || '/static/screenshots';
     }
 
     async launchBrowser() {
@@ -64,10 +65,18 @@ class FeedbackAgent {
     }
 
     async generateReport(results) {
+        const screenshots = await screenshotCapture.list(this.screenshotDir);
+        let normalizedScreenshots = screenshots;
+        if (Array.isArray(screenshots)) {
+            normalizedScreenshots = screenshots.map(s => ({
+                ...s,
+                url: `${this.screenshotBaseUrl}/${this.runId}/${s.filename}`
+            }));
+        }
         return {
             runId: this.runId,
             results,
-            screenshots: await screenshotCapture.list(this.screenshotDir),
+            screenshots: normalizedScreenshots,
         };
     }
 

@@ -20,6 +20,7 @@ class NavigationTestingAgent {
         this.logger = logger;
         this.runId = uuidv4();
         this.screenshotDir = options.screenshotDir || path.resolve('screenshots', this.runId);
+        this.screenshotBaseUrl = options.screenshotBaseUrl || '/static/screenshots';
     }
 
     async launchBrowser() {
@@ -48,7 +49,15 @@ class NavigationTestingAgent {
     }
 
     async validateLinks(links) {
-        return await linkDetector.validateLinks(this.page, links, screenshotCapture, this.screenshotDir, this.timeout);
+        const screenshots = await linkDetector.validateLinks(this.page, links, screenshotCapture, this.screenshotDir, this.timeout);
+        // Normalize screenshot paths for report
+        if (Array.isArray(screenshots)) {
+            return screenshots.map(s => ({
+                ...s,
+                url: `${this.screenshotBaseUrl}/${this.runId}/${s.filename}`
+            }));
+        }
+        return screenshots;
     }
 
     async checkBrokenLinks(links) {
@@ -64,10 +73,18 @@ class NavigationTestingAgent {
     }
 
     async generateReport(results) {
+        const screenshots = await screenshotCapture.list(this.screenshotDir);
+        let normalizedScreenshots = screenshots;
+        if (Array.isArray(screenshots)) {
+            normalizedScreenshots = screenshots.map(s => ({
+                ...s,
+                url: `${this.screenshotBaseUrl}/${this.runId}/${s.filename}`
+            }));
+        }
         return {
             runId: this.runId,
             results,
-            screenshots: await screenshotCapture.list(this.screenshotDir),
+            screenshots: normalizedScreenshots,
         };
     }
 

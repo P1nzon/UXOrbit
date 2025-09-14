@@ -1,0 +1,63 @@
+<div class="report-header">
+  <h1>UXOrbit Technical Report</h1>
+  <div class="report-meta">
+    <span>Date: {{date}}</span>
+    <span>Tested URL: {{metadata.url}}</span>
+    <span>Duration: {{metadata.duration}}</span>
+  </div>
+</div>
+<div class="methodology">
+  <h2>Methodology</h2>
+  <p>{{metadata.methodology}}</p>
+</div>
+<div class="findings">
+  <h2>Findings</h2>
+  {{#each results.agents}}
+    <div class="agent-section">
+      <h3>{{agentType}} Agent</h3>
+      {{#if error}}
+        <div class="agent-failure">
+          <strong>Failure:</strong> {{error}}
+        </div>
+      {{/if}}
+      <div class="agent-summary">{{results.usabilityReport.summary}}</div>
+      <ul>
+        {{#each results.usabilityReport.issues}}
+          <li>{{this.type}}: {{this.message}}</li>
+        {{/each}}
+      </ul>
+      <div class="recommendations">
+        <h4>Recommendations</h4>
+        <ul>
+          {{#each results.usabilityReport.recommendations}}
+            <li>{{this}}</li>
+          {{/each}}
+        </ul>
+      </div>
+      <div class="screenshots">
+        <h4>Screenshots</h4>
+        {{#each results.screenshots}}
+          <img src="{{this.url}}" alt="Screenshot for {{agentType}}" />
+        {{/each}}
+      </div>
+    </div>
+  {{/each}}
+  <h3>Accessibility Summary</h3>
+  <ul>
+    {{#each results.accessibilitySummary.wcagCounts}}
+      <li>WCAG Rule {{@key}}: {{this}}</li>
+    {{/each}}
+  </ul>
+  <h3>Performance Metrics</h3>
+  <ul>
+    <li>First Contentful Paint: avg {{results.performanceSummary.fcp.avg}} ms, min {{results.performanceSummary.fcp.min}} ms, max {{results.performanceSummary.fcp.max}} ms</li>
+    <li>Largest Contentful Paint: avg {{results.performanceSummary.lcp.avg}} ms, min {{results.performanceSummary.lcp.min}} ms, max {{results.performanceSummary.lcp.max}} ms</li>
+    <li>Time to Interactive: avg {{results.performanceSummary.tti.avg}} ms, min {{results.performanceSummary.tti.min}} ms, max {{results.performanceSummary.tti.max}} ms</li>
+  </ul>
+  <h3>Agent Failures</h3>
+  <ul>
+    {{#each results.agentFailures}}
+      <li>{{agentType}} ({{runId}}): {{error}}</li>
+    {{/each}}
+  </ul>
+</div>

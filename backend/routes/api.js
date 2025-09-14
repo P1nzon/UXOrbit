@@ -5,6 +5,138 @@ const logger = require('../utils/logger');
 const AgentOrchestrator = require('../../agents/AgentOrchestrator');
 const sessionManager = require('../utils/sessionManager');
 const { v4: uuidv4 } = require('uuid');
+const path = require('path');
+const ReportGenerator = require('../utils/reportGenerator');
+const ExportManager = require('../utils/exportManager');
+const ResultPersistence = require('../utils/resultPersistence');
+const resultAggregator = require('../utils/resultAggregator');
+const persistence = new ResultPersistence();
+const fs = require('fs-extra');
+const storageDirs = [
+    '../../storage/results',
+    '../../storage/reports',
+    '../../storage/exports',
+    '../../storage/archives',
+    '../../storage/temp'
+];
+storageDirs.forEach(dir => {
+    fs.ensureDir(path.resolve(__dirname, dir));
+});
+const reportGenerator = new ReportGenerator();
+const exportManager = new ExportManager();
+
+const uuidV4Regex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+// New: Generate HTML report
+router.get('/reports/:sessionId', async (req, res) => {
+    const sessionId = req.params.sessionId;
+    if (!uuidV4Regex.test(sessionId)) {
+        return res.status(400).json({ error: 'Invalid sessionId format.' });
+    }
+    try {
+        const results = await persistence.loadResults(sessionId);
+        const html = await reportGenerator.generateDetailedReport(results, results.metadata || {});
+        res.set('Content-Type', 'text/html');
+        res.send(html);
+    } catch (err) {
+        logger.error('Report generation error:', err);
+        res.status(500).json({ error: 'Failed to generate report.' });
+    }
+});
+
+// New: PDF export
+router.get('/reports/:sessionId/pdf', async (req, res) => {
+    const sessionId = req.params.sessionId;
+    if (!uuidV4Regex.test(sessionId)) {
+        return res.status(400).json({ error: 'Invalid sessionId format.' });
+    }
+    try {
+        const results = await persistence.loadResults(sessionId);
+        const pdfPath = path.join(__dirname, '../../storage/reports', `${sessionId}.pdf`);
+        await exportManager.exportToPDF(results, results.metadata || {}, pdfPath);
+        if (!fs.existsSync(pdfPath)) {
+            return res.status(404).json({ error: 'PDF not found.' });
+        }
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Length', fs.statSync(pdfPath).size);
+        const stream = fs.createReadStream(pdfPath);
+        stream.pipe(res);
+    } catch (err) {
+        logger.error('PDF export error:', err);
+        res.status(500).json({ error: 'Failed to export PDF.' });
+    }
+});
+
+// New: JSON export
+router.get('/reports/:sessionId/json', async (req, res) => {
+    const sessionId = req.params.sessionId;
+    if (!uuidV4Regex.test(sessionId)) {
+        return res.status(400).json({ error: 'Invalid sessionId format.' });
+    }
+    try {
+        const results = await persistence.loadResults(sessionId);
+        const jsonPath = path.join(__dirname, '../../storage/exports', `${sessionId}.json`);
+        await exportManager.exportToJSON(results, results.metadata || {}, jsonPath);
+        if (!fs.existsSync(jsonPath)) {
+            return res.status(404).json({ error: 'JSON not found.' });
+        }
+        res.setHeader('Content-Type', 'application/json');
+        res.setHeader('Content-Length', fs.statSync(jsonPath).size);
+        const stream = fs.createReadStream(jsonPath);
+        stream.pipe(res);
+    } catch (err) {
+        logger.error('JSON export error:', err);
+        res.status(500).json({ error: 'Failed to export JSON.' });
+    }
+});
+
+// New: ZIP export
+router.get('/reports/:sessionId/zip', async (req, res) => {
+    const sessionId = req.params.sessionId;
+    if (!uuidV4Regex.test(sessionId)) {
+        return res.status(400).json({ error: 'Invalid sessionId format.' });
+    }
+    try {
+        const results = await persistence.loadResults(sessionId);
+        const pdfPath = path.join(__dirname, '../../storage/reports', `${sessionId}.pdf`);
+        const jsonPath = path.join(__dirname, '../../storage/exports', `${sessionId}.json`);
+        // Ensure PDF exists
+        if (!fs.existsSync(pdfPath)) {
+            await exportManager.exportToPDF(results, results.metadata || {}, pdfPath);
+        }
+        // Ensure JSON exists
+        if (!fs.existsSync(jsonPath)) {
+            await exportManager.exportToJSON(results, results.metadata || {}, jsonPath);
+        }
+        const files = [
+            { path: pdfPath, name: `${sessionId}.pdf` },
+            { path: jsonPath, name: `${sessionId}.json` },
+            // Add screenshots and other assets as needed
+        ];
+        // Check file sizes (limit to 100MB)
+        const totalSize = files.reduce((sum, f) => sum + (fs.existsSync(f.path) ? fs.statSync(f.path).size : 0), 0);
+        if (totalSize > 100 * 1024 * 1024) {
+            return res.status(413).json({ error: 'Export too large.' });
+        }
+        res.set('Content-Type', 'application/zip');
+        await exportManager.exportToZIP(files, res);
+    } catch (err) {
+        logger.error('ZIP export error:', err);
+        res.status(500).json({ error: 'Failed to export ZIP.' });
+    }
+});
+
+// New: Historical results
+router.get('/results/history', async (req, res) => {
+    // Placeholder: implement search/filter logic
+    res.status(501).json({ error: 'Not implemented.' });
+});
+
+// New: Compare results
+router.post('/results/compare', async (req, res) => {
+    // Placeholder: implement comparison logic
+    res.status(501).json({ error: 'Not implemented.' });
+});
 
 const orchestrator = new AgentOrchestrator();
 
@@ -64,14 +196,20 @@ router.post('/start-testing', async (req, res) => {
  */
 router.get('/get-results/:sessionId', async (req, res) => {
     const { sessionId } = req.params;
-    if (!sessionManager.sessionExists(sessionId)) {
-        logger.warn(`Results requested for unknown session ${sessionId}`);
-        return res.status(404).json({ error: 'Session not found' });
-    }
-    const results = orchestrator.getResults(sessionId);
-    if (!results) {
-        logger.info(`Results not ready for session ${sessionId}`);
-        return res.status(202).json({ status: 'pending' });
+    let results;
+    try {
+        results = await persistence.loadResults(sessionId);
+    } catch (err) {
+        // Fallback to in-memory if persistence fails
+        if (!sessionManager.sessionExists(sessionId)) {
+            logger.warn(`Results requested for unknown session ${sessionId}`);
+            return res.status(404).json({ error: 'Session not found' });
+        }
+        results = orchestrator.getResults(sessionId);
+        if (!results) {
+            logger.info(`Results not ready for session ${sessionId}`);
+            return res.status(202).json({ status: 'pending' });
+        }
     }
     res.status(200).json({ results });
 });

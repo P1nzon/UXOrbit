@@ -19,6 +19,7 @@ class FormFillingAgent {
         this.logger = logger;
         this.runId = uuidv4();
         this.screenshotDir = options.screenshotDir || path.resolve('screenshots', this.runId);
+        this.screenshotBaseUrl = options.screenshotBaseUrl || '/static/screenshots';
     }
 
     async launchBrowser() {
@@ -57,7 +58,6 @@ class FormFillingAgent {
         const fields = await this.identifyFields(form);
         for (const field of fields) {
             try {
-                // Use semantic key for mapping
                 const value = testData[field.semantic] ?? testData[field.name] ?? testData[field.id] ?? field.default ?? '';
                 await fieldSelector.fillField(this.page, field, value);
                 this.logger.info(`Filled field: ${field.semantic || field.name}`);
@@ -67,6 +67,8 @@ class FormFillingAgent {
                 await screenshotCapture.capture(this.page, formDir, 'error', field.semantic || field.name, field.element);
             }
         }
+        // After filling, return raw screenshots
+        return await screenshotCapture.list(formDir);
     }
 
     async submitForm(form, formIndex = 0) {
@@ -95,10 +97,18 @@ class FormFillingAgent {
     async generateReport(result, formIndex = 0) {
         // Structure results for API consumption
         const formDir = path.join(this.screenshotDir, `form_${formIndex}`);
+        const screenshots = await screenshotCapture.list(formDir);
+        let normalizedScreenshots = screenshots;
+        if (Array.isArray(screenshots)) {
+            normalizedScreenshots = screenshots.map(s => ({
+                ...s,
+                url: `${this.screenshotBaseUrl}/${this.runId}/${s.filename}`
+            }));
+        }
         return {
             success: result.success,
             errors: result.errors,
-            screenshots: await screenshotCapture.list(formDir),
+            screenshots: normalizedScreenshots,
         };
     }
 

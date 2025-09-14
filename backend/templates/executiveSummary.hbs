@@ -1,0 +1,40 @@
+<div class="report-header">
+  <h1>UXOrbit Executive Summary</h1>
+  <div class="report-meta">
+    <span>Date: {{date}}</span>
+    <span>Tested URL: {{metadata.url}}</span>
+    <span>Duration: {{metadata.duration}}</span>
+  </div>
+</div>
+<div class="summary-section">
+  <h2>Overall Usability Score: <span class="score">{{results.usabilityScore}}</span></h2>
+  <h3>Accessibility Compliance: <span class="score">{{results.accessibilityCompliance}}%</span></h3>
+  <h3>Accessibility Summary</h3>
+  <ul>
+    {{#each results.accessibilitySummary.wcagCounts}}
+      <li>WCAG Rule {{@key}}: {{this}}</li>
+    {{/each}}
+  </ul>
+  <h3>Performance Metrics</h3>
+  <ul>
+    <li>First Contentful Paint: avg {{results.performanceSummary.fcp.avg}} ms, min {{results.performanceSummary.fcp.min}} ms, max {{results.performanceSummary.fcp.max}} ms</li>
+    <li>Largest Contentful Paint: avg {{results.performanceSummary.lcp.avg}} ms, min {{results.performanceSummary.lcp.min}} ms, max {{results.performanceSummary.lcp.max}} ms</li>
+    <li>Time to Interactive: avg {{results.performanceSummary.tti.avg}} ms, min {{results.performanceSummary.tti.min}} ms, max {{results.performanceSummary.tti.max}} ms</li>
+  </ul>
+</div>
+<div class="critical-issues">
+  <h3>Critical Issues</h3>
+  <ul>
+    {{#each results.criticalIssues}}
+      <li>{{this.type}}: {{this.message}}</li>
+    {{/each}}
+  </ul>
+</div>
+<div class="recommendations">
+  <h3>Recommendations</h3>
+  <ul>
+    {{#each results.recommendations}}
+      <li>{{this}}</li>
+    {{/each}}
+  </ul>
+</div>
