@@ -1,6 +1,5 @@
 const performanceMonitor = {
-    async measure(page) {
-        // Inject observer for LCP/CLS before navigation
+    async init(page) {
         await page.addInitScript(() => {
             window.__lcp = 0;
             window.__cls = 0;
@@ -22,7 +21,8 @@ const performanceMonitor = {
                 }
             }).observe({ type: 'layout-shift', buffered: true });
         });
-        // Wait for navigation
+    },
+    async collect(page) {
         await page.waitForLoadState('load');
         const nav = await page.evaluate(() => {
             const n = performance.getEntriesByType('navigation')[0];
