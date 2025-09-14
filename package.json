@@ -4,6 +4,7 @@
   "description": "Multi-Agent UX Testing Dashboard with automated form filling, navigation testing, and accessibility analysis",
   "main": "backend/server.js",
   "scripts": {
+    "postinstall": "playwright install --with-deps",
     "dev": "nodemon backend/server.js",
     "start": "node backend/server.js",
     "test": "jest",

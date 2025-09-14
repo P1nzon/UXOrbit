@@ -16,8 +16,12 @@ app.use('/api', apiRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  logger.error(`Error: ${err.message}`);
-  res.status(err.status || 500).json({ error: err.message });
+  logger.error(err);
+  if (process.env.NODE_ENV === 'production') {
+    res.status(500).json({ error: 'Internal Server Error' });
+  } else {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 const server = app.listen(PORT, () => {

@@ -15,15 +15,17 @@ function log(level, message) {
   const color = colors[level] || '';
   const reset = colors.reset;
   const formatted = `[${timestamp()}] [${level.toUpperCase()}] ${message}`;
-  if (process.env.NODE_ENV === 'production' && level === 'debug') return;
+  const levels = { error: 0, warn: 1, info: 2, debug: 3 };
+  const LOG_LEVEL = process.env.LOG_LEVEL || 'info';
+  if (levels[level] > levels[LOG_LEVEL]) return;
   console[level === 'error' ? 'error' : 'log'](`${color}${formatted}${reset}`);
 }
 
 module.exports = {
-  info: (msg) => log('info', msg),
-  warn: (msg) => log('warn', msg),
-  error: (msg) => log('error', msg),
-  debug: (msg) => log('debug', msg),
+  info: (...args) => log('info', ...args),
+  warn: (...args) => log('warn', ...args),
+  error: (...args) => log('error', ...args),
+  debug: (...args) => log('debug', ...args),
   agent: (msg) => log('info', `[AGENT] ${msg}`),
   api: (msg) => log('info', `[API] ${msg}`),
   result: (msg) => log('info', `[RESULT] ${msg}`),
