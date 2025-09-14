@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="UXOrbit - Multi-Agent UX Testing Dashboard">
+  <title>UXOrbit - Multi-Agent UX Testing Dashboard</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Multi-Agent UX Testing Dashboard</h1>
+    </header>
+    <main>
+      <section class="dashboard">
+        <form id="test-form">
+          <div class="input-section">
+            <label for="website-url">Website URL</label>
+            <input type="url" id="website-url" placeholder="https://example.com" required>
+          </div>
+          <div class="tasks-section">
+            <h3>Select Testing Agents</h3>
+            <div class="checkbox-group">
+              <label><input type="checkbox" value="form" id="agent-form"> Form Filling</label>
+              <label><input type="checkbox" value="navigation" id="agent-navigation"> Navigation Testing</label>
+              <label><input type="checkbox" value="feedback" id="agent-feedback"> Feedback Analysis</label>
+            </div>
+          </div>
+          <div class="action-section">
+            <button id="start-agents" type="submit">Start Testing</button>
+            <div id="status"></div>
+          </div>
+        </form>
+        <section class="results-section">
+          <h3>Test Results</h3>
+          <div id="results"></div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
